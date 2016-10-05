@@ -21,7 +21,12 @@ table = readRDS(args$f)
 molten = melt(table, measure.vars=c("empty", "csf", "gm", "wm"))[variable != "empty"]
 
 plot = ggplot(molten, aes(x=age, y=value, color=variable)) +
-    geom_point()
+    geom_point() +
+    ylab("number of voxels")
 print(plot)
 
+width = 7
+factor = 0.618
+height = width * factor
+ggsave("plots/fractions.png", plot, width=width, height=height, dpi=300)
 invisible(readLines("stdin", n=1))
