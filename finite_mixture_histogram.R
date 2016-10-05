@@ -25,18 +25,14 @@ commandline_parser$add_argument('-f', '--file',
             help='file with the data.table')
 args = commandline_parser$parse_args()
 
-table = fread(args$f)[, voxels := voxels / sum(voxels)]
+table = fread(args$f)
 
 sigma = 100
 print(table[, voxels])
 
-finite.mixture = normalmixEM2comp(
-    table[, voxels],
-    lambda=1,
-    mu=c(800, 1350),
-    sigsqrd=c(sigma*sigma, sigma*sigma),
-    verb=TRUE
-    )
+plot = ggplot(table) +
+    geom_line(aes(x=bin, y=voxels))
+print(plot)
 
-print(summary(finite.mixture))
-plot(finite.mixture)
+
+invisible(readLines("stdin", n=1))
