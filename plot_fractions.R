@@ -26,6 +26,8 @@ commandline_parser$add_argument(
 args = commandline_parser$parse_args()
 
 table = readRDS(args$f)
+print(table[id == 1])
+
 
 molten = melt(table, measure.vars=c("empty", "csf", "gm", "wm"))[variable != "empty"]
 
