@@ -42,7 +42,7 @@ print(table)
 
 molten = melt(table, measure.vars=c("empty", "csf", "gm", "wm"))
 
-fit = lm(age ~ gm, data=table)
+fit = lm(gm ~ age, data=table)
 b = fit$coefficients[1]
 a = fit$coefficients[2]
 saveRDS(fit, args$o)
@@ -53,7 +53,7 @@ plot = ggplot(molten, aes(x=value, y=age, color=variable)) +
     geom_point() +
     xlab("number of voxels") +
     ylab("age") +
-    geom_abline(size=2, intercept=b, slope=a) +
+    geom_abline(size=2, intercept=-b/a, slope=1/a) +
     coord_flip()
 print(plot)
 

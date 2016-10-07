@@ -4,6 +4,7 @@ import numpy as np
 import csv
 import skimage.segmentation as sks
 from progress_bar import progress_bar
+from id_from_filename import id_from_filename
 
 
 @click.command()
@@ -23,7 +24,7 @@ def main(output_file, input_files):
         img = nb.load(file_name).get_data()[..., 0]
         empty = np.size(img[img == 0])
         markers = np.zeros(img.shape, dtype=np.uint8)
-        sample_id = file_name.split(".")[0].split("_")[2]
+        sample_id = id_from_filename(file_name)
         markers[img == 0] = 1  # empty
         markers[np.logical_and(img > 0, img < 300)] = 2  # csf
         markers[np.logical_and(img > 650, img < 850)] = 3  # gm
