@@ -24,11 +24,11 @@ def main(output_file, input_files):
         empty = np.size(img[img == 0])
         markers = np.zeros(img.shape, dtype=np.uint8)
         sample_id = file_name.split(".")[0].split("_")[2]
-        markers[img == 0] = 1
-        markers[np.logical_and(img > 0, img < 300)] = 2
-        markers[np.logical_and(img > 650, img < 850)] = 3
-        markers[np.logical_and(img > 1250, img < 1450)] = 4
-        labels = sks.random_walker(img, markers, beta=60, mode="cg_mg")
+        markers[img == 0] = 1  # empty
+        markers[np.logical_and(img > 0, img < 300)] = 2  # csf
+        markers[np.logical_and(img > 650, img < 850)] = 3  # gm
+        markers[np.logical_and(img > 1250, img < 1450)] = 4  # wm
+        labels = sks.random_walker(img, markers, beta=500, mode="cg_mg")
         segmentation_file_name = file_name.replace(
             "train", "train_segmented").replace(
                 ".nii", ".npy")

@@ -11,7 +11,15 @@ commandline_parser$add_argument(
     '--file',
     type='character',
     nargs='?',
-    default='data/voxel_fractions.rds',
+    default='data/voxel_fractions.csv',
+    help='file with the voxel fractions'
+    )
+commandline_parser$add_argument(
+    '-a',
+    '--age',
+    type='character',
+    nargs='?',
+    default='data/targets.csv',
     help='file with the ages'
     )
 commandline_parser$add_argument(
@@ -25,11 +33,14 @@ commandline_parser$add_argument(
 
 args = commandline_parser$parse_args()
 
-table = readRDS(args$f)
-print(table[id == 1])
+table = fread(args$f)
+ages = fread(args$a)
+table[, age := ages[id, V1]]
+table[, empty := empty / 10]
+print(table)
 
 
-molten = melt(table, measure.vars=c("empty", "csf", "gm", "wm"))[variable != "empty"]
+molten = melt(table, measure.vars=c("empty", "csf", "gm", "wm"))
 
 fit = lm(age ~ gm, data=table)
 b = fit$coefficients[1]
