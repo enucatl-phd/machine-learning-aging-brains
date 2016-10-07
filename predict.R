@@ -85,7 +85,7 @@ print(bayes.ages)
 plot = ggplot(bayes.ages, aes(x=age.fit, y=age)) + geom_point()
 print(plot)
 
-output = bayes.ages[, .(ID=id, Prediction=round(age))]
+output = bayes.ages[order(id), .(ID=id, Prediction=round(age))]
 print(output)
 
 
