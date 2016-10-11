@@ -8,10 +8,8 @@ setup(
     packages=find_packages(exclude=['test', 'data', 'plots']),
     install_requires=[
         'nibabel',
-        'click',
         'numpy',
         'scipy',
-        'tensorflow',
         'scikit-learn',
     ],
     package_data={
