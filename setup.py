@@ -7,6 +7,7 @@ setup(
     version="0.0",
     packages=find_packages(exclude=['test', 'data', 'plots']),
     install_requires=[
+        'google-cloud-dataflow',
         'nibabel',
         'numpy',
         'scipy',
