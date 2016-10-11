@@ -4,6 +4,7 @@ library(argparse)
 library(data.table)
 library(mixtools)
 library(ggplot2)
+library(oro.nifti)
 
 theme_set(theme_bw(base_size=12) + theme(
     legend.key.size=unit(1, 'lines'),
@@ -20,22 +21,62 @@ theme_set(theme_bw(base_size=12) + theme(
 
 commandline_parser = ArgumentParser(
         description="fit histogram with two components")
-commandline_parser$add_argument('-f', '--file',
-            type='character', nargs='?', default='data/set_train_histogram.csv',
-            help='file with the data.table')
+commandline_parser$add_argument(
+    '-f',
+    '--files',
+    type='character',
+    nargs='*',
+    help='image'
+    )
+commandline_parser$add_argument(
+    '-a',
+    '--age',
+    type='character',
+    nargs='?',
+    default='data/targets.csv',
+    help='file with the ages'
+    )
+commandline_parser$add_argument(
+    '-o',
+    '--output',
+    type='character',
+    nargs='?',
+    default='data/finite.mixtures.csv',
+    help='output file'
+    )
 args = commandline_parser$parse_args()
 
-table = fread(args$f)
+ages = fread(args$a)
+nifti2data.table = function(file.name) {
+    voxel = readNIfTI(file.name)@.Data
+    voxel = as.data.table(voxel)[voxel > 0]
+    finite.mixtures = normalmixEM(
+        voxel[, voxel],
+        mu=c(270, 800, 1330),
+        sigma=c(70, 70, 70)
+        )
+    id = as.numeric(strsplit(strsplit(file.name, "\\.")[[1]][1], "_")[[1]][3])
+    return(
+        data.table(
+            id=id,
+            age=ages[id, V1],
+            lambda_csf = finite.mixtures$lambda[1],
+            mu_csf = finite.mixtures$mu[1],
+            sigma_csf = finite.mixtures$sigma[1],
+            lambda_gm = finite.mixtures$lambda[2],
+            mu_gm = finite.mixtures$mu[2],
+            sigma_gm = finite.mixtures$sigma[2],
+            lambda_wm = finite.mixtures$lambda[3],
+            mu_wm = finite.mixtures$mu[3],
+            sigma_wm = finite.mixtures$sigma[3]
+            )
+        )
+}
 
-sigma = 100
-print(table[, voxels])
+file.names = data.table(file.name=args$f)
+voxels = file.names[,
+    nifti2data.table(file.name),
+    by=file.name
+    ]
 
-plot = ggplot(table) +
-    geom_line(aes(x=bin, y=voxels))
-print(plot)
-
-width = 7
-factor = 0.618
-height = width * factor
-ggsave("plots/set_train_histogram.png", plot, width=width, height=height, dpi=300)
-invisible(readLines("stdin", n=1))
+write.csv(voxels, file=args$o, row.names=FALSE)

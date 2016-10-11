@@ -3,6 +3,7 @@
 library(oro.nifti)
 library(argparse)
 library(data.table)
+library(mixtools)
 
 commandline_parser = ArgumentParser(
         description="")
@@ -36,9 +37,9 @@ ages = fread(args$a)
 nifti2data.table = function(file.name) {
     voxel = readNIfTI(file.name)@.Data
     voxel = as.data.table(voxel)
-    n = nrow(voxel)
     empty = nrow(voxel[voxel == 0])
-    csf = nrow(voxel[voxel > 0 & voxel < 315])
+    voxel = voxel[voxel > 0]
+    csf = nrow(voxel[voxel < 315])
     gm = nrow(voxel[voxel >= 650 & voxel < 850])
     wm = nrow(voxel[voxel >= 1110])
     id = as.numeric(strsplit(strsplit(file.name, "\\.")[[1]][1], "_")[[1]][3])
@@ -57,6 +58,9 @@ nifti2data.table = function(file.name) {
 }
 
 file.names = data.table(file.name=args$f)
-voxels = file.names[, nifti2data.table(file.name), by=file.name]
+voxels = file.names[,
+    nifti2data.table(file.name),
+    by=file.name
+    ]
 
 write.csv(voxels, file=args$o)
