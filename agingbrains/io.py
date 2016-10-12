@@ -17,17 +17,8 @@ class _Nifti1Source(beam.io.filebasedsource.FileBasedSource):
             img_fh = nb.fileholders.FileHolder(fileobj=f)
             file_map = {"image": img_fh}
             header = nb.Nifti1Image.header_class.from_fileobj(f)
-            hdr_copy = header.copy()
-            data = nb.Nifti1Image.ImageArrayProxy(f, hdr_copy, mmap=False)
-            img = nb.Nifti1Image(data, None, header, file_map=file_map)
-            img._affine = header.get_best_affine()
-            img._load_cache = {
-                "header": hdr_copy,
-                "affine": img._affine.copy(),
-                "file_map": nb.fileholders.copy_file_map(file_map)
-            }
-            print(img.get_data()[..., 0])
-            yield record
+            data = header.data_from_fileobj(f)
+            yield data
 
 class ReadNifti1(beam.transforms.PTransform):
 
