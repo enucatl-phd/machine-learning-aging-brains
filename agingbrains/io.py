@@ -2,6 +2,7 @@ import nibabel as nb
 import numpy as np
 import apache_beam as beam
 
+
 class _Nifti1Source(beam.io.filebasedsource.FileBasedSource):
 
     def __init__(self, file_pattern, min_bundle_size):
@@ -19,6 +20,7 @@ class _Nifti1Source(beam.io.filebasedsource.FileBasedSource):
             header = nb.Nifti1Image.header_class.from_fileobj(f)
             data = header.data_from_fileobj(f)
             yield (file_name, data)
+
 
 class ReadNifti1(beam.transforms.PTransform):
 
