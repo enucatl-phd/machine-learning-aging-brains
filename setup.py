@@ -5,7 +5,7 @@ from setuptools import setup, find_packages
 setup(
     name="agingbrains",
     version="0.0",
-    packages=find_packages(exclude=['test', 'data', 'plots']),
+    packages=find_packages(exclude=['local_postprocessing', 'test', 'data', 'plots']),
     install_requires=[
         'google-cloud-dataflow',
         'nibabel',
