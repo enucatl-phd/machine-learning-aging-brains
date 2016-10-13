@@ -3,7 +3,7 @@
 library(oro.nifti)
 library(argparse)
 library(data.table)
-library(mixtools)
+library(tools)
 
 commandline_parser = ArgumentParser(
         description="")
@@ -42,7 +42,7 @@ nifti2data.table = function(file.name) {
     csf = nrow(voxel[voxel < 315])
     gm = nrow(voxel[voxel >= 650 & voxel < 850])
     wm = nrow(voxel[voxel >= 1500])
-    id = as.numeric(strsplit(basename(file_name_sans_ext(file.name)), "_")[[1]][2])
+    id = as.numeric(strsplit(basename(file_path_sans_ext(file.name)), "_")[[1]][2])
     return(data.table(
             id=id,
             age=ages[id, V1],
