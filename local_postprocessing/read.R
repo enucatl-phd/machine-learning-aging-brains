@@ -42,7 +42,7 @@ nifti2data.table = function(file.name) {
     csf = nrow(voxel[voxel < 315])
     gm = nrow(voxel[voxel >= 650 & voxel < 850])
     wm = nrow(voxel[voxel >= 1500])
-    id = as.numeric(strsplit(strsplit(file.name, "\\.")[[1]][1], "_")[[1]][3])
+    id = as.numeric(strsplit(basename(file_name_sans_ext(file.name)), "_")[[1]][2])
     return(data.table(
             id=id,
             age=ages[id, V1],
