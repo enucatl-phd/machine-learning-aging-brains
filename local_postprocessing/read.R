@@ -19,7 +19,7 @@ commandline_parser$add_argument(
     '--age',
     type='character',
     nargs='?',
-    default='data/targets.csv',
+    default='../data/targets.csv',
     help='file with the ages'
     )
 commandline_parser$add_argument(
@@ -27,7 +27,7 @@ commandline_parser$add_argument(
     '--output',
     type='character',
     nargs='?',
-    default='data/voxel_fractions_global_thresholding.csv',
+    default='../data/voxel_fractions_set_train.csv',
     help='output file'
     )
 args = commandline_parser$parse_args()
@@ -41,7 +41,7 @@ nifti2data.table = function(file.name) {
     voxel = voxel[voxel > 0]
     csf = nrow(voxel[voxel < 315])
     gm = nrow(voxel[voxel >= 650 & voxel < 850])
-    wm = nrow(voxel[voxel >= 1110])
+    wm = nrow(voxel[voxel >= 1500])
     id = as.numeric(strsplit(strsplit(file.name, "\\.")[[1]][1], "_")[[1]][3])
     return(data.table(
             id=id,
