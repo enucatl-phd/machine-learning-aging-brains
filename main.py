@@ -1,4 +1,3 @@
-import sys
 import apache_beam as beam
 import agingbrains as ab
 
@@ -9,8 +8,7 @@ class AgingBrainOptions(beam.utils.options.PipelineOptions):
         parser.add_argument(
             "--input",
             dest="input",
-            nargs="*",
-            default="gs://mlp1-data/set_train/train_10[01].nii"
+            default="data/set_train/train_10[01].nii"
         )
         parser.add_argument(
             "--output",
@@ -21,11 +19,12 @@ class AgingBrainOptions(beam.utils.options.PipelineOptions):
 
 
 if __name__ == "__main__":
-    pipeline_options = beam.utils.options.PipelineOptions(sys.argv)
+    pipeline_options = beam.utils.options.PipelineOptions()
     p = beam.Pipeline(options=pipeline_options)
     options = pipeline_options.view_as(AgingBrainOptions)
-    (p
-     | "Read" >> ab.io.ReadNifti1(options.input)
-     | beam.io.WriteToText(options.output)
+    datasets = p | "Read" >> ab.io.ReadNifti1(options.input)
+    thresholds = datasets | "GlobalThresholding" >> beam.Map(
+        ab.segment.global_thresholding
     )
+    thresholds | beam.io.WriteToText(options.output)
     p.run()

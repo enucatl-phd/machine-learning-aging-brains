@@ -1,9 +1,8 @@
-import nibabel as nb
+import numpy as np
 
-def main(file_name):
-    img = nb.load(file_name).get_data()[..., 0]
-    markers = np.zeros(img.shape, dtype=np.uint8)
-    markers[img == 0] = 1  # empty
-    markers[np.logical_and(img > 0, img < 300)] = 2  # csf
-    markers[np.logical_and(img > 650, img < 850)] = 3  # gm
-    markers[np.logical_and(img > 1250, img < 1450)] = 4  # wm
+
+def global_thresholding((file_name, data)):
+    csf = np.size(data[np.logical_and(data > 0, data < 300)])
+    gm = np.size(data[np.logical_and(data > 650, data < 850)])
+    wm = np.size(data[np.logical_and(data > 1250, data < 1450)])
+    return (file_name, (csf, gm, wm))

@@ -18,18 +18,11 @@ class _Nifti1Source(beam.io.filebasedsource.FileBasedSource):
             file_map = {"image": img_fh}
             header = nb.Nifti1Image.header_class.from_fileobj(f)
             data = header.data_from_fileobj(f)
-            yield data
+            yield (file_name, data)
 
 class ReadNifti1(beam.transforms.PTransform):
 
     def __init__(self, file_pattern=None, min_bundle_size=0):
-        """TODO: Docstring for __init__.
-
-        :file_pattern: TODO
-        :min_bundle_size: TODO
-        :returns: TODO
-
-        """
         super(ReadNifti1, self).__init__()
         self._file_pattern = file_pattern
         self._min_bundle_size = min_bundle_size
