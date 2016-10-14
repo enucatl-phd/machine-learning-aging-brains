@@ -3,6 +3,7 @@
 library(argparse)
 library(data.table)
 library(ggplot2)
+library(tools)
 
 commandline_parser = ArgumentParser(
         description="")
@@ -42,10 +43,13 @@ args = commandline_parser$parse_args()
 
 fit = readRDS(args$r)
 table = fread(args$f)
+ages = fread(args$a)
+setnames(table, c("file.name", "gl_csf", "gl_gm", "gl_wm", "csf", "gm", "wm"))
+table[, id := as.numeric(strsplit(basename(file_path_sans_ext(file.name)), "_")[[1]][2]), by=file.name]
+table[, age := ages[id, V1]]
 print(fit)
 print(table)
 
-ages = fread(args$a)
 p_a = hist(ages[, V1], breaks=20)
 get.age.probability = function(age) {
     binwidth = p_a$breaks[2] - p_a$breaks[1]
@@ -82,9 +86,12 @@ bayes.ages$age.fit = probabilities[, mean(age.fit), by=id]$V1
 print(bayes.ages)
 
 
+width = 7
+factor = 0.618
+height = width * factor
 plot = ggplot(bayes.ages, aes(x=age.fit, y=age)) + geom_point()
 print(plot)
-
+ggsave("../plots/linear.age.vs.bayes.age.png", plot, width=width, height=height, dpi=300)
 output = bayes.ages[order(id), .(ID=id, Prediction=round(age))]
 print(output)
 

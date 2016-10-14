@@ -12,7 +12,7 @@ commandline_parser$add_argument(
     '--file',
     type='character',
     nargs='?',
-    default='../data/voxel_fractions.csv',
+    default='../data/finite_mixtures_set_train.csv',
     help='file with the voxel fractions'
     )
 commandline_parser$add_argument(
@@ -29,37 +29,35 @@ commandline_parser$add_argument(
     type='character',
     nargs='?',
     default='../data/fit_gm_age.rds',
-    help='output for the gm vs age fit'
+    help='fit'
     )
 
 args = commandline_parser$parse_args()
 
 table = fread(args$f)
 ages = fread(args$a)
-setnames(table, c("file.name", "csf", "gm", "wm", "fr_csf", "fr_gm", "fr_wm"))
+setnames(table, c("file.name", "gl_csf", "gl_gm", "gl_wm", "csf", "gm", "wm"))
 table[, id := as.numeric(strsplit(basename(file_path_sans_ext(file.name)), "_")[[1]][2]), by=file.name]
 table[, age := ages[id, V1]]
 print(table)
 
 
-molten = melt(table, measure.vars=c("csf", "gm", "wm", "fr_gm", "fr_wm"))
-#molten = melt(table, measure.vars=c("mean"))
-
-#fit = lm(gm ~ age, data=table)
-#b = fit$coefficients[1]
-#a = fit$coefficients[2]
-#saveRDS(fit, args$o)
-#print(summary(fit))
+fit = lm(gm ~ age, data=table)
+b = fit$coefficients[1]
+a = fit$coefficients[2]
+saveRDS(fit, args$o)
+print(summary(fit))
 
 
+molten = melt(table, measure.vars=c("gl_csf", "gl_gm", "gl_wm", "gm", "wm"))
 plot = ggplot(molten, aes(x=age, y=value, color=variable)) +
     geom_point() +
-    xlab("age")
+    geom_abline(slope=a, intercept=b)
 print(plot)
 
 
 width = 7
 factor = 0.618
 height = width * factor
-ggsave("../plots/fractions.png", plot, width=width, height=height, dpi=300)
+ggsave("../plots/finite.mixtures.png", plot, width=width, height=height, dpi=300)
 invisible(readLines("stdin", n=1))
