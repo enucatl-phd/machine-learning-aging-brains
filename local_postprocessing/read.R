@@ -52,7 +52,7 @@ nifti2data.table = function(file.name) {
             wm=wm,
             mean=voxel[, mean(voxel)],
             median=voxel[, median(voxel)],
-            sd=voxel[, sd(voxel)]
+            stdev=voxel[, sd(voxel)]
             )
         )
 }
