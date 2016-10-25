@@ -1,5 +1,20 @@
 import apache_beam as beam
 import agingbrains as ab
+import StringIO
+import csv
+
+
+def groups2csv((name, dictionary)):
+    l = (
+        [name] +
+        list(dictionary["global"][0]) +
+        list(dictionary["frontal"][0])
+    )
+    line = StringIO.StringIO()
+    writer = csv.writer(line, lineterminator="")
+    writer.writerow(l)
+    return line.getvalue()
+
 
 class AgingBrainOptions(beam.utils.options.PipelineOptions):
 
@@ -13,7 +28,6 @@ class AgingBrainOptions(beam.utils.options.PipelineOptions):
         parser.add_argument(
             "--output",
             dest="output",
-            nargs="*",
             default="output/OUTPUT_FILE"
         )
 
@@ -26,5 +40,16 @@ if __name__ == "__main__":
     thresholds = datasets | "GlobalThresholding" >> beam.Map(
         ab.segment.global_thresholding
     )
-    thresholds | beam.io.WriteToText(options.output)
+    frontal_thresholds = datasets | "FrontalThresholding" >> beam.Map(
+        ab.segment.frontal_thresholding
+    )
+    merged = {
+        "global": thresholds,
+        "frontal": frontal_thresholds
+    } | beam.CoGroupByKey()
+    (
+        merged
+        | beam.Map(groups2csv)
+        | beam.io.WriteToText(options.output)
+    )
     p.run()
