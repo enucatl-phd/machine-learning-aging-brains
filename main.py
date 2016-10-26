@@ -35,22 +35,22 @@ if __name__ == "__main__":
         ab.segment.frontal_thresholding
     )
     ages = p | "ReadAge" >> ab.read_age.ReadAge(options.ages, options.input)
-    # voxels = ({"data": datasets, "age": ages}
-        # | "GroupWithAge" >> beam.CoGroupByKey()
-        # | beam.core.FlatMap(ab.voxel_fit.emit_voxels)
-        # | beam.core.GroupByKey()
-        # | beam.core.FlatMap(ab.voxel_fit.filter_empty)
-        # | beam.core.Map(ab.voxel_fit.fit_voxel)
-        # | beam.io.WriteToText(options.output)
-    # )
-    merged = {
-        "global": thresholds,
-        "frontal": frontal_thresholds,
-        "age": ages,
-    } | beam.CoGroupByKey()
-    (
-        merged
-        | beam.Map(ab.io.groups2csv)
+    voxels = ({"data": datasets, "age": ages}
+        | "GroupWithAge" >> beam.CoGroupByKey()
+        | beam.core.FlatMap(ab.voxel_fit.emit_voxels)
+        | beam.core.GroupByKey()
+        | beam.core.FlatMap(ab.voxel_fit.filter_empty)
+        | beam.core.Map(ab.voxel_fit.fit_voxel)
         | beam.io.WriteToText(options.output)
     )
+    # merged = {
+        # "global": thresholds,
+        # "frontal": frontal_thresholds,
+        # "age": ages,
+    # } | beam.CoGroupByKey()
+    # (
+        # merged
+        # | beam.Map(ab.io.groups2csv)
+        # | beam.io.WriteToText(options.output)
+    # )
     p.run()

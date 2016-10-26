@@ -20,7 +20,11 @@ class _Nifti1Source(beam.io.filebasedsource.FileBasedSource):
             img_fh = nb.fileholders.FileHolder(fileobj=f)
             file_map = {"image": img_fh}
             header = nb.Nifti1Image.header_class.from_fileobj(f)
-            data = header.data_from_fileobj(f)
+            data = header.data_from_fileobj(f)[
+                107-2:107+2,
+                76-2:76+2,
+                100-2:100+2
+            ]
             yield (file_name, data)
 
 

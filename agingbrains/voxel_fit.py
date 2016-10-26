@@ -5,7 +5,6 @@ import sklearn.gaussian_process as skg
 def emit_voxels((file_name, dictionary)):
     data = dictionary["data"][0][..., 0]
     age = dictionary["age"][0]
-    print(file_name)
     for x in range(data.shape[0]):
         for y in range(data.shape[1]):
             for z in range(data.shape[2]):
