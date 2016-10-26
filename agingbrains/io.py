@@ -15,15 +15,15 @@ class _Nifti1Source(beam.io.filebasedsource.FileBasedSource):
 
     def read_records(self, file_name, range_tracker):
         with self.open_file(file_name) as f:
-            record = np.array((1, 1, 1))
             hdr_fh = nb.fileholders.FileHolder(fileobj=f)
             img_fh = nb.fileholders.FileHolder(fileobj=f)
             file_map = {"image": img_fh}
             header = nb.Nifti1Image.header_class.from_fileobj(f)
             data = header.data_from_fileobj(f)[
-                107-2:107+2,
-                76-2:76+2,
-                100-2:100+2
+                # 107-2:107+2,
+                # 76-2:76+2,
+                # 100-2:100+2
+                ..., 0
             ]
             yield (file_name, data)
 
