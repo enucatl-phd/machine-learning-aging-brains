@@ -1,6 +1,8 @@
 import nibabel as nb
 import numpy as np
 import apache_beam as beam
+import StringIO
+import csv
 
 
 class _Nifti1Source(beam.io.filebasedsource.FileBasedSource):
@@ -34,3 +36,16 @@ class ReadNifti1(beam.transforms.PTransform):
             _Nifti1Source(
                 file_pattern=self._file_pattern,
                 min_bundle_size=self._min_bundle_size))
+
+
+def groups2csv((name, dictionary)):
+    l = (
+        [name] +
+        dictionary["age"] +
+        list(dictionary["global"][0]) +
+        list(dictionary["frontal"][0])
+    )
+    line = StringIO.StringIO()
+    writer = csv.writer(line, lineterminator="")
+    writer.writerow(l)
+    return line.getvalue()
