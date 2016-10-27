@@ -4,21 +4,19 @@ import sklearn.neighbors as skn
 
 
 def emit_voxels((file_name, dictionary)):
-    data = dictionary["data"][0]
+    data = dictionary["data"][0].flatten()
     age = dictionary["age"][0]
-    for x in range(data.shape[0]):
-        for y in range(data.shape[1]):
-            for z in range(data.shape[2]):
-                yield ((x, y, z), (age, data[x, y, z]))
+    for i, voxel in enumerate(data):
+        yield i, (age, voxel)
 
 
-def filter_empty(((x, y, z), ar)):
+def filter_empty((i, ar)):
     ar = np.array(ar)
     if np.any(ar[:, 1]):
-        yield ((x, y, z), ar)
+        yield (i, ar)
 
 
-def fit_voxel(((x, y, z), ar)):
+def fit_voxel((i, ar), aging_scale_threshold=80):
     ages, voxels = ar.T
     kernel = (
         skg.kernels.ConstantKernel(constant_value=500, constant_value_bounds=(100, 2000))
@@ -28,16 +26,12 @@ def fit_voxel(((x, y, z), ar)):
     gp = skg.GaussianProcessRegressor(kernel=kernel, n_restarts_optimizer=9)
     gp.fit(ages.reshape(-1, 1), voxels)
     aging_scale = gp.kernel_.get_params()['k1__k2__length_scale']
-    return ((x, y, z), aging_scale)
-
-
-def filter_irrelevant(((x, y, z), aging_scale), aging_scale_threshold=80):
     if aging_scale < aging_scale_threshold:
-        yield (x, y, z)
+        yield (i, (aging_scale, ar))
 
 
 def estimate_kernel_density(
-        ((x, y, z), ar),
+        (i, (aging_scale, ar)),
         kernel="exponential",
         bandwidth=15,
         scaling_factor=15):
@@ -46,4 +40,8 @@ def estimate_kernel_density(
         kernel=kernel,
         bandwidth=bandwidth)
     kde.fit(ar)
-    return ((x, y, z), kde)
+    return (i, kde)
+
+
+def estimate_age((file_name, data), trained_voxels):
+    pass
