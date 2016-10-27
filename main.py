@@ -57,6 +57,12 @@ if __name__ == "__main__":
         | beam.GroupByKey()
         | beam.core.FlatMap(ab.voxel_fit.filter_empty)
         | beam.core.FlatMap(ab.voxel_fit.fit_voxel)
-        | beam.core.FlatMap(ab.voxel_fit.estimate_kernel_density)
+        | beam.core.Map(ab.voxel_fit.estimate_kernel_density)
+    )
+    test_voxels = test_dataset | beam.core.FlatMap(ab.voxel_fit.emit_test_voxels)
+    ({"train": trained_voxels, "test": test_voxels}
+        | "CombineTestData" >> beam.CoGroupByKey()
+        | "FilterRelevant" >> beam.core.Filter(ab.voxel_fit.filter_test_voxels)
+        | beam.io.WriteToText(options.output)
     )
     p.run()

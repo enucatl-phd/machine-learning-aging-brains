@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import sklearn.gaussian_process as skg
 import sklearn.neighbors as skn
@@ -40,8 +41,24 @@ def estimate_kernel_density(
         kernel=kernel,
         bandwidth=bandwidth)
     kde.fit(ar)
-    return (i, kde)
+    return i, kde
 
 
-def estimate_age((file_name, data), trained_voxels):
-    pass
+def emit_test_voxels((file_name, data)):
+    data = data.flatten()
+    basename = os.path.splitext(os.path.basename(file_name))[0]
+    file_id = int(basename.split("_")[1]) - 1
+    for i, voxel in enumerate(data):
+        yield i, (file_id, voxel)
+
+
+def filter_test_voxels((i, dictionary)):
+    return dictionary["train"]
+
+
+def estimate_age(i, kde):
+    score = kde.score_samples(np.array(150))
+    print(score)
+    return i, kde.score_samples(np.array(150))
+
+

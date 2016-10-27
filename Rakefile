@@ -18,7 +18,7 @@ namespace :run do
       "--zone europe-west1-c",
       "--setup_file ./setup.py",
       "--ages #{bucket}/targets.csv",
-      "--input \"#{bucket}/set_train/train_*.nii\""
+      "--train \"#{bucket}/set_train/train_*.nii\""
     ].join(" ")
   end
 
@@ -35,7 +35,7 @@ namespace :run do
       "--zone europe-west1-c",
       "--setup_file ./setup.py",
       "--ages #{bucket}/targets.csv",
-      "--input \"#{bucket}/set_train/train_*.nii\""
+      "--train \"#{bucket}/set_train/train_*.nii\""
     ].join(" ")
   end
 
@@ -52,7 +52,7 @@ namespace :run do
     sh [
       "python main.py",
       "--test_slice",
-      "--input \"data/set_train/train_*.nii\"",
+      "--train \"data/set_train/train_*.nii\"",
     ].join(" ")
   end
 
