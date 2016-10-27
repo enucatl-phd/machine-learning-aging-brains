@@ -39,6 +39,13 @@ namespace :run do
     ].join(" ")
   end
 
+  desc "run locally"
+  task :local do
+    sh [
+      "python main.py",
+    ].join(" ")
+  end
+
   desc "copy output from the cloud"
   task :copy do
     sh "gsutil cp \"#{bucket}/output/*\" output"
