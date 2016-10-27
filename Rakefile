@@ -39,12 +39,23 @@ namespace :run do
     ].join(" ")
   end
 
-  desc "run locally"
-  task :local do
+  desc "run locally with two files only"
+  task :local_small do
     sh [
       "python main.py",
+      "--test_slice"
     ].join(" ")
   end
+
+  desc "run locally with all files"
+  task :local_big do
+    sh [
+      "python main.py",
+      "--test_slice",
+      "--input \"data/set_train/train_*.nii\"",
+    ].join(" ")
+  end
+
 
   desc "copy output from the cloud"
   task :copy do

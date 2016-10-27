@@ -21,13 +21,20 @@ class AgingBrainOptions(beam.utils.options.PipelineOptions):
             dest="output",
             default="output/OUTPUT_FILE"
         )
+        parser.add_argument(
+            "--test_slice",
+            dest="test_slice",
+            action="store_true"
+        )
 
 
 if __name__ == "__main__":
     pipeline_options = beam.utils.options.PipelineOptions()
     p = beam.Pipeline(options=pipeline_options)
     options = pipeline_options.view_as(AgingBrainOptions)
-    datasets = p | "ReadData" >> ab.io.ReadNifti1(options.input)
+    datasets = p | "ReadData" >> ab.io.ReadNifti1(
+        options.input,
+        test_slice=options.test_slice)
     thresholds = datasets | "GlobalThresholding" >> beam.Map(
         ab.segment.global_thresholding
     )

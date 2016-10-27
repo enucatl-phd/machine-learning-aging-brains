@@ -7,39 +7,48 @@ import csv
 
 class _Nifti1Source(beam.io.filebasedsource.FileBasedSource):
 
-    def __init__(self, file_pattern, min_bundle_size):
+    def __init__(self, file_pattern, min_bundle_size, test_slice):
         super(_Nifti1Source, self).__init__(
             file_pattern=file_pattern,
             min_bundle_size=min_bundle_size,
             splittable=False)
+        self._test_slice = test_slice
 
     def read_records(self, file_name, range_tracker):
         with self.open_file(file_name) as f:
             hdr_fh = nb.fileholders.FileHolder(fileobj=f)
-            img_fh = nb.fileholders.FileHolder(fileobj=f)
-            file_map = {"image": img_fh}
             header = nb.Nifti1Image.header_class.from_fileobj(f)
-            data = header.data_from_fileobj(f)[
-                # 107-2:107+2,
-                # 76-2:76+2,
-                # 100-2:100+2
-                ..., 0
-            ]
+            array_proxy = nb.arrayproxy.ArrayProxy(f, header, mmap=False)
+            if self._test_slice:
+                data = array_proxy[
+                        107 - 2: 107 + 2,
+                        76 - 2: 76 + 2,
+                        100 - 2: 100 + 2,
+                        0
+                    ]
+            else:
+                data = array_proxy[..., 0]
             yield (file_name, data)
 
 
 class ReadNifti1(beam.transforms.PTransform):
 
-    def __init__(self, file_pattern=None, min_bundle_size=0):
+    def __init__(self,
+                 file_pattern=None,
+                 min_bundle_size=0,
+                 test_slice=False
+                ):
         super(ReadNifti1, self).__init__()
         self._file_pattern = file_pattern
         self._min_bundle_size = min_bundle_size
+        self._test_slice = test_slice
 
     def apply(self, pcoll):
         return pcoll.pipeline | beam.io.Read(
             _Nifti1Source(
                 file_pattern=self._file_pattern,
-                min_bundle_size=self._min_bundle_size))
+                min_bundle_size=self._min_bundle_size,
+                test_slice=self._test_slice))
 
 
 def groups2csv((name, dictionary)):
