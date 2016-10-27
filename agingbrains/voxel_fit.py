@@ -1,5 +1,6 @@
 import numpy as np
 import sklearn.gaussian_process as skg
+import sklearn.neighbors as skn
 
 
 def emit_voxels((file_name, dictionary)):
@@ -28,3 +29,21 @@ def fit_voxel(((x, y, z), ar)):
     gp.fit(ages.reshape(-1, 1), voxels)
     aging_scale = gp.kernel_.get_params()['k1__k2__length_scale']
     return ((x, y, z), aging_scale)
+
+
+def filter_irrelevant(((x, y, z), aging_scale), aging_scale_threshold=80):
+    if aging_scale < aging_scale_threshold:
+        yield (x, y, z)
+
+
+def estimate_kernel_density(
+        ((x, y, z), ar),
+        kernel="exponential",
+        bandwidth=15,
+        scaling_factor=15):
+    ar[:, 1] /= scaling_factor
+    kde = skn.KernelDensity(
+        kernel=kernel,
+        bandwidth=bandwidth)
+    kde.fit(ar)
+    return ((x, y, z), kde)
