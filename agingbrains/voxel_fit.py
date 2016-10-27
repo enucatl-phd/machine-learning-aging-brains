@@ -1,3 +1,4 @@
+from __future__ import division
 import os
 import numpy as np
 import sklearn.gaussian_process as skg
@@ -47,7 +48,7 @@ def estimate_kernel_density(
 def emit_test_voxels((file_name, data)):
     data = data.flatten()
     basename = os.path.splitext(os.path.basename(file_name))[0]
-    file_id = int(basename.split("_")[1]) - 1
+    file_id = int(basename.split("_")[1])
     for i, voxel in enumerate(data):
         yield i, (file_id, voxel)
 
@@ -56,9 +57,14 @@ def filter_test_voxels((i, dictionary)):
     return dictionary["train"]
 
 
-def estimate_age(i, kde):
-    score = kde.score_samples(np.array(150))
-    print(score)
-    return i, kde.score_samples(np.array(150))
-
-
+def estimate_age((i, dictionary), scaling_factor=15):
+    ages = np.arange(15, 99)
+    kde = dictionary["train"][0]
+    for file_id, value in dictionary["test"]:
+        value = value / scaling_factor
+        xy = np.vstack((ages, np.tile(value, ages.shape[0]))).T
+        z = np.exp(kde.score_samples(xy))
+        xy[:, 1] = z / np.sum(z)
+        mean = np.dot(xy[:, 0], xy[:, 1])
+        variance = np.dot(xy[:, 0] ** 2, xy[:, 1]) - mean ** 2
+        yield (file_id, (mean, variance))
