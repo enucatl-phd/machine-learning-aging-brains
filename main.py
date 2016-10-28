@@ -58,7 +58,7 @@ if __name__ == "__main__":
         | "GroupWithAge" >> beam.CoGroupByKey()
         | beam.core.FlatMap(agingbrains.voxel_fit.emit_voxels)
         | beam.GroupByKey()
-        | beam.core.FlatMap(agingbrains.voxel_fit.fit_voxel)
+        | beam.core.FlatMap(agingbrains.voxel_fit.filter_voxels_correlation)
         | beam.core.Map(agingbrains.voxel_fit.estimate_kernel_density)
     )
     test_voxels = test_dataset | beam.core.FlatMap(agingbrains.voxel_fit.emit_test_voxels)

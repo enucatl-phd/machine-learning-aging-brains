@@ -1,4 +1,4 @@
-from __future__ import division
+from __future__ import division, print_function
 import os
 import logging
 import numpy as np
@@ -19,9 +19,17 @@ def emit_voxels((file_name, dictionary)):
             yield i, (age, voxel)
 
 
-def fit_voxel((i, ar), aging_scale_threshold=80):
+def filter_voxels_correlation((i, ar), correlation_threshold=0.4):
+    ar = np.array(list(ar), dtype=float)
+    corr = np.abs(np.corrcoef(*ar.T)[0, 1])
+    if corr > correlation_threshold:
+        yield (i, (corr, ar))
+
+
+def filter_voxels_gaussian_process((i, ar), aging_scale_threshold=80):
     ar = np.array(list(ar), dtype=float)
     ages, voxels = ar.T
+    corr = np.abs(np.corrcoef(*ar.T)[0, 1])
     kernel = (
         skgk.ConstantKernel(constant_value=500, constant_value_bounds=(100, 2000))
         * skgk.RBF(length_scale=5, length_scale_bounds=(3, 200))

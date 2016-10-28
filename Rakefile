@@ -96,8 +96,8 @@ namespace :run do
   end
 
 
-  desc "copy output from the cloud"
-  task :copy do
-    sh "gsutil cp \"#{bucket}/output/*\" output"
+  desc "ls output from the cloud"
+  task :ls do
+    sh "gsutil ls #{bucket}/output/"
   end
 end
