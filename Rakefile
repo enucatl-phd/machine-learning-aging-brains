@@ -47,15 +47,15 @@ namespace :run do
   desc "run tests on the cloud"
   task :cloud_small do
     sh [
-      "python main.py",
+      "python test_stuff.py",
       "--project #{project}",
-      "--job_name #{project}-main1",
+      "--job_name #{project}-main-m",
       "--runner DataflowPipelineRunner",
       "--max_num_workers 300",
       "--autoscaling_algorithm THROUGHPUT_BASED",
       "--staging_location #{bucket}/staging",
       "--temp_location #{bucket}/temp",
-      "--output #{bucket}/output/output_small",
+      "--output #{bucket}/output/output_small_m",
       "--zone europe-west1-c",
       "--setup_file ./setup.py",
       "--ages #{bucket}/targets.csv",
