@@ -18,7 +18,7 @@ class _Nifti1Source(beam.io.filebasedsource.FileBasedSource):
         with self.open_file(file_name) as f:
             hdr_fh = nb.fileholders.FileHolder(fileobj=f)
             header = nb.Nifti1Image.header_class.from_fileobj(f)
-            array_proxy = nb.arrayproxy.ArrayProxy(f, header, mmap=False)
+            array_proxy = header.data_from_fileobj(f)
             if self._test_slice:
                 data = array_proxy[
                         107 - 2: 107 + 2,
