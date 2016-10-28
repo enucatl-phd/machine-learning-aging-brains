@@ -40,12 +40,12 @@ if __name__ == "__main__":
     datasets = p | "ReadTrainDataset" >> ab.io.ReadNifti1(
         options.train,
         test_slice=options.test_slice)
-    thresholds = datasets | "GlobalThresholding" >> beam.Map(
-        ab.segment.global_thresholding
-    )
-    frontal_thresholds = datasets | "FrontalThresholding" >> beam.Map(
-        ab.segment.frontal_thresholding
-    )
+    # thresholds = datasets | "GlobalThresholding" >> beam.Map(
+        # ab.segment.global_thresholding
+    # )
+    # frontal_thresholds = datasets | "FrontalThresholding" >> beam.Map(
+        # ab.segment.frontal_thresholding
+    # )
     ages = p | "ReadTrainDatasetAge" >> ab.read_age.ReadAge(
         options.ages, options.train)
     test_dataset = p | "ReadTestDataset" >> ab.io.ReadNifti1(

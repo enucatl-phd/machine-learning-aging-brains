@@ -4,11 +4,32 @@ bucket = "gs://mlp1-data"
 namespace :run do
 
   desc "run async on the cloud"
+  task :cloud_small do
+    sh [
+      "python main.py",
+      "--project #{project}",
+      "--job_name #{project}-main",
+      "--runner BlockingDataflowPipelineRunner",
+      "--max_num_workers 300",
+      "--autoscaling_algorithm THROUGHPUT_BASED",
+      "--staging_location #{bucket}/staging",
+      "--temp_location #{bucket}/temp",
+      "--output #{bucket}/output/output",
+      "--zone europe-west1-c",
+      "--setup_file ./setup.py",
+      "--test_slice",
+      "--ages #{bucket}/targets.csv",
+      "--train \"#{bucket}/set_train/train_*.nii\"",
+      "--test \"#{bucket}/set_test/test_1[01].nii\""
+    ].join(" ")
+  end
+
+  desc "run async on the cloud"
   task :cloud do
     sh [
       "python main.py",
       "--project #{project}",
-      "--job_name #{project}-main1",
+      "--job_name #{project}-main",
       "--runner DataflowPipelineRunner",
       "--max_num_workers 300",
       "--autoscaling_algorithm THROUGHPUT_BASED",
@@ -27,7 +48,7 @@ namespace :run do
     sh [
       "python main.py",
       "--project #{project}",
-      "--job_name #{project}-main1",
+      "--job_name #{project}-main",
       "--runner BlockingDataflowPipelineRunner",
       "--staging_location #{bucket}/staging",
       "--temp_location #{bucket}/temp",
