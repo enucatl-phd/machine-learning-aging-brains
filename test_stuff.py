@@ -1,6 +1,8 @@
 import apache_beam as beam
-import agingbrains as ab
-
+import agingbrains
+import agingbrains.io
+import agingbrains.read_age
+import agingbrains.voxel_fit
 
 class AgingBrainOptions(beam.utils.options.PipelineOptions):
 
@@ -36,10 +38,10 @@ def read_all_and_group():
     pipeline_options = beam.utils.options.PipelineOptions()
     p = beam.Pipeline(options=pipeline_options)
     options = pipeline_options.view_as(AgingBrainOptions)
-    datasets = p | "ReadTrainDataset" >> ab.io.ReadNifti1(
+    datasets = p | "ReadTrainDataset" >> agingbrains.io.ReadNifti1(
         options.train,
         test_slice=options.test_slice)
-    ages = p | "ReadTrainDatasetAge" >> ab.read_age.ReadAge(
+    ages = p | "ReadTrainDatasetAge" >> agingbrains.read_age.ReadAge(
         options.ages, options.train)
     trained_voxels = ({"data": datasets, "age": ages}
         | "GroupWithAge" >> beam.CoGroupByKey()
@@ -51,14 +53,14 @@ def read_and_emit_voxels():
     pipeline_options = beam.utils.options.PipelineOptions()
     p = beam.Pipeline(options=pipeline_options)
     options = pipeline_options.view_as(AgingBrainOptions)
-    datasets = p | "ReadTrainDataset" >> ab.io.ReadNifti1(
+    datasets = p | "ReadTrainDataset" >> agingbrains.io.ReadNifti1(
         options.train,
         test_slice=options.test_slice)
-    ages = p | "ReadTrainDatasetAge" >> ab.read_age.ReadAge(
+    ages = p | "ReadTrainDatasetAge" >> agingbrains.read_age.ReadAge(
         options.ages, options.train)
     trained_voxels = ({"data": datasets, "age": ages}
         | "GroupWithAge" >> beam.CoGroupByKey()
-        | "ProduceVoxels" >> beam.core.FlatMap(ab.voxel_fit.emit_voxels)
+        | "ProduceVoxels" >> beam.core.FlatMap(agingbrains.voxel_fit.emit_voxels)
         | beam.GroupByKey()
         | "SaveGroupedData" >> beam.io.WriteToText(options.output)
     )
@@ -72,36 +74,36 @@ def old_main():
     pipeline_options = beam.utils.options.PipelineOptions()
     p = beam.Pipeline(options=pipeline_options)
     options = pipeline_options.view_as(AgingBrainOptions)
-    datasets = p | "ReadTrainDataset" >> ab.io.ReadNifti1(
+    datasets = p | "ReadTrainDataset" >> agingbrains.io.ReadNifti1(
         options.train,
         test_slice=options.test_slice)
     thresholds = datasets | "GlobalThresholding" >> beam.Map(
-        ab.segment.global_thresholding
+        agingbrains.segment.global_thresholding
     )
     frontal_thresholds = datasets | "FrontalThresholding" >> beam.Map(
-        ab.segment.frontal_thresholding
+        agingbrains.segment.frontal_thresholding
     )
-    ages = p | "ReadTrainDatasetAge" >> ab.read_age.ReadAge(
+    ages = p | "ReadTrainDatasetAge" >> agingbrains.read_age.ReadAge(
         options.ages, options.train)
-    test_dataset = p | "ReadTestDataset" >> ab.io.ReadNifti1(
+    test_dataset = p | "ReadTestDataset" >> agingbrains.io.ReadNifti1(
         options.test,
         test_slice=options.test_slice)
     trained_voxels = ({"data": datasets, "age": ages}
         | "GroupWithAge" >> beam.CoGroupByKey()
-        | beam.core.FlatMap(ab.voxel_fit.emit_voxels)
+        | beam.core.FlatMap(agingbrains.voxel_fit.emit_voxels)
         | beam.GroupByKey()
-        | beam.core.FlatMap(ab.voxel_fit.filter_empty)
-        | beam.core.FlatMap(ab.voxel_fit.fit_voxel)
-        | beam.core.Map(ab.voxel_fit.estimate_kernel_density)
+        | beam.core.FlatMap(agingbrains.voxel_fit.filter_empty)
+        | beam.core.FlatMap(agingbrains.voxel_fit.fit_voxel)
+        | beam.core.Map(agingbrains.voxel_fit.estimate_kernel_density)
     )
-    test_voxels = test_dataset | beam.core.FlatMap(ab.voxel_fit.emit_test_voxels)
+    test_voxels = test_dataset | beam.core.FlatMap(agingbrains.voxel_fit.emit_test_voxels)
     ({"train": trained_voxels, "test": test_voxels}
         | "CombineTestData" >> beam.CoGroupByKey()
         | "FilterRelevant" >> beam.core.Filter(
-            ab.voxel_fit.filter_test_voxels)
-        | beam.core.FlatMap(ab.voxel_fit.estimate_age)
+            agingbrains.voxel_fit.filter_test_voxels)
+        | beam.core.FlatMap(agingbrains.voxel_fit.estimate_age)
         | "RecombineTestBrains" >> beam.core.GroupByKey()
-        | beam.core.Map(ab.voxel_fit.average_age)
+        | beam.core.Map(agingbrains.voxel_fit.average_age)
         | beam.io.WriteToText(options.output)
     )
     p.run()
