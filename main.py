@@ -66,5 +66,7 @@ if __name__ == "__main__":
             ab.voxel_fit.filter_test_voxels)
         | beam.core.FlatMap(ab.voxel_fit.estimate_age)
         | "RecombineTestBrains" >> beam.core.GroupByKey()
+        | beam.core.Map(ab.voxel_fit.average_age)
+        | beam.io.WriteToText(options.output)
     )
     p.run()

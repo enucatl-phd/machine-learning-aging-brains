@@ -1,5 +1,6 @@
 from __future__ import division
 import os
+import logging
 import numpy as np
 import sklearn.gaussian_process as skg
 import sklearn.neighbors as skn
@@ -14,6 +15,7 @@ def emit_voxels((file_name, dictionary)):
 
 def filter_empty((i, ar)):
     ar = np.array(ar)
+    logging.info("filter_empty array created with shape %s", ar.shape)
     if np.any(ar[:, 1]):
         yield (i, ar)
 
@@ -65,6 +67,10 @@ def estimate_age((i, dictionary), scaling_factor=15):
         xy = np.vstack((ages, np.tile(value, ages.shape[0]))).T
         z = np.exp(kde.score_samples(xy))
         xy[:, 1] = z / np.sum(z)
-        mean = np.dot(xy[:, 0], xy[:, 1])
-        variance = np.dot(xy[:, 0] ** 2, xy[:, 1]) - mean ** 2
-        yield (file_id, (mean, variance))
+        mode = xy[np.argmax(xy[:, 1]), 0]
+        print(file_id, mode)
+        yield file_id, mode
+
+
+def average_age((file_id, modes)):
+    return file_id, np.mean(np.array(modes))
