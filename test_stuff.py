@@ -47,9 +47,26 @@ def read_all_and_group():
     )
     p.run()
 
+def read_and_emit_voxels():
+    pipeline_options = beam.utils.options.PipelineOptions()
+    p = beam.Pipeline(options=pipeline_options)
+    options = pipeline_options.view_as(AgingBrainOptions)
+    datasets = p | "ReadTrainDataset" >> ab.io.ReadNifti1(
+        options.train,
+        test_slice=options.test_slice)
+    ages = p | "ReadTrainDatasetAge" >> ab.read_age.ReadAge(
+        options.ages, options.train)
+    trained_voxels = ({"data": datasets, "age": ages}
+        | "GroupWithAge" >> beam.CoGroupByKey()
+        | "ProduceVoxels" >> beam.core.FlatMap(ab.voxel_fit.emit_voxels)
+        | beam.GroupByKey()
+        | "SaveGroupedData" >> beam.io.WriteToText(options.output)
+    )
+    p.run()
+
 
 if __name__ == "__main__":
-    read_all_and_group()
+    read_and_emit_voxels()
 
 def old_main():
     pipeline_options = beam.utils.options.PipelineOptions()
