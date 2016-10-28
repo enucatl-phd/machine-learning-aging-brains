@@ -19,14 +19,8 @@ def emit_voxels((file_name, dictionary)):
             yield i, (age, voxel)
 
 
-def filter_empty((i, ar)):
-    ar = np.array(list(ar), dtype=float)
-    logging.info("filter_empty array created with shape %s", ar.shape)
-    if np.any(ar[:, 1]):
-        yield (i, ar)
-
-
 def fit_voxel((i, ar), aging_scale_threshold=80):
+    ar = np.array(list(ar), dtype=float)
     ages, voxels = ar.T
     kernel = (
         skgk.ConstantKernel(constant_value=500, constant_value_bounds=(100, 2000))
@@ -75,9 +69,9 @@ def estimate_age((i, dictionary), scaling_factor=15):
         z = np.exp(kde.score_samples(xy))
         xy[:, 1] = z / np.sum(z)
         mode = xy[np.argmax(xy[:, 1]), 0]
-        print(file_id, mode)
         yield file_id, mode
 
 
 def average_age((file_id, modes)):
-    return file_id, np.mean(np.array(list(modes)))
+    final_age_estimate = np.mean(np.array(list(modes)))
+    return file_id, final_age_estimate

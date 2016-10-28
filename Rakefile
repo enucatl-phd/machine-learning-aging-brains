@@ -39,7 +39,8 @@ namespace :run do
       "--zone europe-west1-c",
       "--setup_file ./setup.py",
       "--ages #{bucket}/targets.csv",
-      "--train \"#{bucket}/set_train/train_*.nii\""
+      "--train \"#{bucket}/set_train/train_*.nii\"",
+      "--test \"#{bucket}/set_test/test_*.nii\"",
     ].join(" ")
   end
 
@@ -50,13 +51,17 @@ namespace :run do
       "--project #{project}",
       "--job_name #{project}-main",
       "--runner BlockingDataflowPipelineRunner",
+      "--max_num_workers 300",
+      "--autoscaling_algorithm THROUGHPUT_BASED",
       "--staging_location #{bucket}/staging",
       "--temp_location #{bucket}/temp",
       "--output #{bucket}/output/output",
       "--zone europe-west1-c",
       "--setup_file ./setup.py",
+      "--test_slice",
       "--ages #{bucket}/targets.csv",
-      "--train \"#{bucket}/set_train/train_*.nii\""
+      "--train \"#{bucket}/set_train/train_*.nii\"",
+      "--test \"#{bucket}/set_test/test_*.nii\"",
     ].join(" ")
   end
 
