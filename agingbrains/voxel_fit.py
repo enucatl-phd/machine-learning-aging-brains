@@ -2,6 +2,10 @@ from __future__ import division
 import os
 import logging
 import numpy as np
+
+import sklearn
+logging.info("SKLEARN VERSION %s", sklearn.__version__)
+
 import sklearn.gaussian_process as skg
 import sklearn.gaussian_process.kernels as skgk
 import sklearn.neighbors as skn
@@ -16,7 +20,7 @@ def emit_voxels((file_name, dictionary)):
 
 
 def filter_empty((i, ar)):
-    ar = np.array(list(ar))
+    ar = np.array(list(ar), dtype=float)
     logging.info("filter_empty array created with shape %s", ar.shape)
     if np.any(ar[:, 1]):
         yield (i, ar)
@@ -41,7 +45,7 @@ def estimate_kernel_density(
         kernel="exponential",
         bandwidth=15,
         scaling_factor=15):
-    ar[:, 1] /= scaling_factor
+    ar[:, 1] = ar[:, 1] / scaling_factor
     kde = skn.KernelDensity(
         kernel=kernel,
         bandwidth=bandwidth)

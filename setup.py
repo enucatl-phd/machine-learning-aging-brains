@@ -9,7 +9,7 @@ setup(
     install_requires=[
         'google-cloud-dataflow',
         'nibabel',
-        'scikit-learn',
+        'scikit-learn>=0.18',
         'scipy',
         'numpy',
     ],
