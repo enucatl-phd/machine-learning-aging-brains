@@ -1,5 +1,5 @@
 project = "machine-learning-aging-brains"
-bucket = "gs://mlp1-data"
+bucket = "gs://mlp1-data-high-avail"
 
 namespace :run do
 
