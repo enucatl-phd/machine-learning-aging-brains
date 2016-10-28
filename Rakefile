@@ -1,5 +1,6 @@
 project = "machine-learning-aging-brains"
-bucket = "gs://mlp1-data-high-avail"
+bucket = "gs://mlp1-data-us"
+zone = "us-east1-b"
 
 namespace :run do
 
@@ -57,7 +58,7 @@ namespace :run do
       "--staging_location #{bucket}/staging",
       "--temp_location #{bucket}/temp",
       "--output #{bucket}/output/marco/output",
-      "--zone europe-west1-c",
+      "--zone #{zone}",
       "--setup_file ./setup.py",
       "--ages #{bucket}/targets.csv",
       "--train \"#{bucket}/set_train/train_10[01].nii\"",
