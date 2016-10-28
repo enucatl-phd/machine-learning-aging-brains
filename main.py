@@ -50,7 +50,8 @@ if __name__ == "__main__":
         options.ages, options.train)
     test_dataset = p | "ReadTestDataset" >> ab.io.ReadNifti1(
         options.test,
-        test_slice=options.test_slice) trained_voxels = ({"data": datasets, "age": ages}
+        test_slice=options.test_slice)
+    trained_voxels = ({"data": datasets, "age": ages}
         | "GroupWithAge" >> beam.CoGroupByKey()
         | beam.core.FlatMap(ab.voxel_fit.emit_voxels)
         | beam.GroupByKey()
