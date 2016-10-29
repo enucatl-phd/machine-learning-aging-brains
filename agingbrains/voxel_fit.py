@@ -30,10 +30,11 @@ def filter_correlation((i, (corr, ar)), min_correlation=0.4):
 
 
 def estimate_kernel_density(
-        (i, (aging_scale, ar)),
+        (i, ar),
         kernel="exponential",
         bandwidth=15,
         scaling_factor=15):
+    ar = np.array(list(ar), dtype=float)
     ar[:, 1] = ar[:, 1] / scaling_factor
     kde = skn.KernelDensity(
         kernel=kernel,
@@ -43,16 +44,10 @@ def estimate_kernel_density(
 
 
 def emit_test_voxels((file_name, data)):
-    data = data.flatten()
     basename = os.path.splitext(os.path.basename(file_name))[0]
     file_id = int(basename.split("_")[1])
     for i, voxel in enumerate(data):
-        if voxel > 0:
-            yield i, (file_id, voxel)
-
-
-def filter_test_voxels((i, dictionary)):
-    return dictionary["train"]
+        yield i, (file_id, voxel)
 
 
 def estimate_age((i, dictionary), scaling_factor=15):
@@ -62,11 +57,5 @@ def estimate_age((i, dictionary), scaling_factor=15):
         value = value / scaling_factor
         xy = np.vstack((ages, np.tile(value, ages.shape[0]))).T
         z = np.exp(kde.score_samples(xy))
-        xy[:, 1] = z / np.sum(z)
-        mode = xy[np.argmax(xy[:, 1]), 0]
-        yield file_id, mode
-
-
-def average_age((file_id, modes)):
-    final_age_estimate = np.mean(np.array(list(modes)))
-    return file_id, final_age_estimate
+        probs = z / np.sum(z)
+        yield file_id, i, probs

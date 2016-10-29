@@ -51,6 +51,43 @@ class ReadNifti1(beam.transforms.PTransform):
                 test_slice=self._test_slice))
 
 
+class _NumpySource(beam.io.filebasedsource.FileBasedSource):
+
+    def __init__(self, file_pattern, min_bundle_size, test_slice):
+        super(_NumpySource, self).__init__(
+            file_pattern=file_pattern,
+            min_bundle_size=min_bundle_size,
+            splittable=False)
+        self._test_slice = test_slice
+
+    def read_records(self, file_name, range_tracker):
+        with self.open_file(file_name) as f:
+            data = np.load(f)
+            if self._test_slice:
+                data = data[:10]
+            yield (file_name, data)
+
+
+class ReadNumpy(beam.transforms.PTransform):
+
+    def __init__(self,
+                 file_pattern=None,
+                 min_bundle_size=0,
+                 test_slice=False
+                ):
+        super(ReadNumpy, self).__init__()
+        self._file_pattern = file_pattern
+        self._min_bundle_size = min_bundle_size
+        self._test_slice = test_slice
+
+    def apply(self, pcoll):
+        return pcoll.pipeline | beam.io.Read(
+            _NumpySource(
+                file_pattern=self._file_pattern,
+                min_bundle_size=self._min_bundle_size,
+                test_slice=self._test_slice))
+
+
 def groups2csv((name, dictionary)):
     l = (
         [name] +
@@ -66,3 +103,8 @@ def groups2csv((name, dictionary)):
 
 def save_correlation((i, (corr, ar))):
     return "{0},{1}".format(i, corr)
+
+
+def save_probabilities((file_id, i, probs)):
+    return "{0},{1},{2}".format(
+        file_id, i, ",".join([str(x) for x in probs]))
