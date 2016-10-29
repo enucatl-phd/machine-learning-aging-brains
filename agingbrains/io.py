@@ -106,5 +106,7 @@ def save_correlation((i, (corr, ar))):
 
 
 def save_probabilities((file_id, i, probs)):
-    return "{0},{1},{2}".format(
-        file_id, i, ",".join([str(x) for x in probs]))
+    line = StringIO.StringIO()
+    writer = csv.writer(line, lineterminator="")
+    writer.writerow([file_id, i] + ["{:.3g}".format(x) for x in probs])
+    return line.getvalue()

@@ -10,7 +10,7 @@ import numpy as np
 @click.command()
 @click.option(
     "--threshold",
-    default=0.45,
+    default=0.6,
 )
 @click.argument(
     "correlations",
@@ -33,7 +33,7 @@ def main(threshold, correlations, input_files):
         filtered_data = data[correlation_brain > 0]
         output_name = file_name.replace(
             "set_", "filtered_set_").replace(
-                ".nii", ".csv")
+                ".nii", ".npy")
         np.save(output_name, filtered_data)
 
 if __name__ == "__main__":
