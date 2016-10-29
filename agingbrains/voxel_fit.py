@@ -19,27 +19,14 @@ def emit_voxels((file_name, dictionary)):
             yield i, (age, voxel)
 
 
-def filter_voxels_correlation((i, ar), correlation_threshold=0.4):
+def correlation((i, ar)):
     ar = np.array(list(ar), dtype=float)
     corr = np.abs(np.corrcoef(*ar.T)[0, 1])
-    if corr > correlation_threshold:
-        yield (i, (corr, ar))
+    return (i, (corr, ar))
 
 
-def filter_voxels_gaussian_process((i, ar), aging_scale_threshold=80):
-    ar = np.array(list(ar), dtype=float)
-    ages, voxels = ar.T
-    corr = np.abs(np.corrcoef(*ar.T)[0, 1])
-    kernel = (
-        skgk.ConstantKernel(constant_value=500, constant_value_bounds=(100, 2000))
-        * skgk.RBF(length_scale=5, length_scale_bounds=(3, 200))
-        + skgk.WhiteKernel(noise_level=1000, noise_level_bounds=(1e3, 1e4))
-    )
-    gp = skg.GaussianProcessRegressor(kernel=kernel, n_restarts_optimizer=9)
-    gp.fit(ages.reshape(-1, 1), voxels)
-    aging_scale = gp.kernel_.get_params()['k1__k2__length_scale']
-    if aging_scale < aging_scale_threshold:
-        yield (i, (aging_scale, ar))
+def filter_correlation((i, (corr, ar)), min_correlation=0.4):
+    return corr > min_correlation
 
 
 def estimate_kernel_density(

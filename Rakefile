@@ -6,6 +6,7 @@ project = "machine-learning-aging-brains"
 bucket = "gs://mlp1-data-high-avail"
 
 output = "#{bucket}/output/output-#{id}"
+correlation_output = "#{bucket}/correlation_output/output-#{id}"
 jobname = "#{project}-#{id}"
 
 namespace :run do
@@ -22,8 +23,9 @@ namespace :run do
       "--staging_location #{bucket}/staging",
       "--temp_location #{bucket}/temp",
       "--output #{output}",
+      "--correlation_output #{correlation_output}",
       "--zone europe-west1-c",
-      "--disk_size_gb 15",
+      "--disk_size_gb 100",
       "--worker_machine_type n1-highcpu-2",
       "--setup_file ./setup.py",
       "--test_slice",
@@ -45,8 +47,9 @@ namespace :run do
       "--staging_location #{bucket}/staging",
       "--temp_location #{bucket}/temp",
       "--output #{output}",
+      "--correlation_output #{correlation_output}",
       "--zone europe-west1-c",
-      "--disk_size_gb 15",
+      "--disk_size_gb 100",
       "--worker_machine_type n1-highcpu-2",
       "--setup_file ./setup.py",
       "--ages #{bucket}/targets.csv",
@@ -67,8 +70,9 @@ namespace :run do
       "--staging_location #{bucket}/staging",
       "--temp_location #{bucket}/temp",
       "--output #{output}",
+      "--correlation_output #{correlation_output}",
       "--zone europe-west1-c",
-      "--disk_size_gb 15",
+      "--disk_size_gb 100",
       "--worker_machine_type n1-highcpu-2",
       "--setup_file ./setup.py",
       "--test_slice",

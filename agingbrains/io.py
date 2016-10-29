@@ -62,3 +62,7 @@ def groups2csv((name, dictionary)):
     writer = csv.writer(line, lineterminator="")
     writer.writerow(l)
     return line.getvalue()
+
+
+def save_correlation((i, (corr, ar))):
+    return "{0},{1}".format(i, corr)

@@ -30,6 +30,11 @@ class AgingBrainOptions(beam.utils.options.PipelineOptions):
             default="output/OUTPUT_FILE"
         )
         parser.add_argument(
+            "--correlation_output",
+            dest="correlation_output",
+            default="output/CORR_OUTPUT_FILE"
+        )
+        parser.add_argument(
             "--test_slice",
             dest="test_slice",
             action="store_true"
@@ -43,32 +48,34 @@ if __name__ == "__main__":
     datasets = p | "ReadTrainDataset" >> agingbrains.io.ReadNifti1(
         options.train,
         test_slice=options.test_slice)
-    # thresholds = datasets | "GlobalThresholding" >> beam.Map(
-        # agingbrains.segment.global_thresholding
-    # )
-    # frontal_thresholds = datasets | "FrontalThresholding" >> beam.Map(
-        # agingbrains.segment.frontal_thresholding
-    # )
     ages = p | "ReadTrainDatasetAge" >> agingbrains.read_age.ReadAge(
         options.ages, options.train)
-    test_dataset = p | "ReadTestDataset" >> agingbrains.io.ReadNifti1(
-        options.test,
-        test_slice=options.test_slice)
-    trained_voxels = ({"data": datasets, "age": ages}
+    brain_correlation_map = ({"data": datasets, "age": ages}
         | "GroupWithAge" >> beam.CoGroupByKey()
         | beam.core.FlatMap(agingbrains.voxel_fit.emit_voxels)
         | beam.GroupByKey()
-        | beam.core.FlatMap(agingbrains.voxel_fit.filter_voxels_correlation)
-        | beam.core.Map(agingbrains.voxel_fit.estimate_kernel_density)
+        | beam.core.Map(agingbrains.voxel_fit.correlation)
     )
-    test_voxels = test_dataset | beam.core.FlatMap(agingbrains.voxel_fit.emit_test_voxels)
-    ({"train": trained_voxels, "test": test_voxels}
-        | "CombineTestData" >> beam.CoGroupByKey()
-        | "FilterRelevant" >> beam.core.Filter(
-            agingbrains.voxel_fit.filter_test_voxels)
-        | beam.core.FlatMap(agingbrains.voxel_fit.estimate_age)
-        | "RecombineTestBrains" >> beam.core.GroupByKey()
-        | beam.core.Map(agingbrains.voxel_fit.average_age)
-        | beam.io.WriteToText(options.output)
-    )
+    (
+        brain_correlation_map
+        | beam.core.Map(agingbrains.io.save_correlation)
+        | beam.io.WriteToText(options.correlation_output)
+     )
+    # test_dataset = p | "ReadTestDataset" >> agingbrains.io.ReadNifti1(
+        # options.test,
+        # test_slice=options.test_slice)
+    # trained_voxels = (brain_correlation_map
+        # | beam.core.Filter(agingbrains.voxel_fit.filter_correlation)
+        # | beam.core.Map(agingbrains.voxel_fit.estimate_kernel_density)
+    # )
+    # test_voxels = test_dataset | beam.core.FlatMap(agingbrains.voxel_fit.emit_test_voxels)
+    # ({"train": trained_voxels, "test": test_voxels}
+        # | "CombineTestData" >> beam.CoGroupByKey()
+        # | "FilterRelevant" >> beam.core.Filter(
+            # agingbrains.voxel_fit.filter_test_voxels)
+        # | beam.core.FlatMap(agingbrains.voxel_fit.estimate_age)
+        # | "RecombineTestBrains" >> beam.core.GroupByKey()
+        # | beam.core.Map(agingbrains.voxel_fit.average_age)
+        # | beam.io.WriteToText(options.output)
+    # )
     p.run()
