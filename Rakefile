@@ -61,8 +61,7 @@ namespace :run do
       "--zone #{zone}",
       "--setup_file ./setup.py",
       "--ages #{bucket}/targets.csv",
-      "--train \"#{bucket}/set_train/train_10[01].nii\"",
-      "--test_slice"
+      "--train \"#{bucket}/set_train/train_*.nii\"",
     ].join(" ")
   end
 
@@ -94,6 +93,14 @@ namespace :run do
       "--test_slice"
     ].join(" ")
   end
+
+  desc "run locally with two files only but all voxels"
+  task :local_af do
+    sh [
+      "python test_stuff.py",
+    ].join(" ")
+  end
+
 
   desc "run locally with all files"
   task :local_big do
