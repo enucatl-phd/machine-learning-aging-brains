@@ -66,9 +66,34 @@ def read_and_emit_voxels():
     )
     p.run()
 
+def compute_distance_matrix():
+    """This should be run locally with :local_af"""
+    pipeline_options = beam.utils.options.PipelineOptions()
+    p = beam.Pipeline(options=pipeline_options)
+    options = pipeline_options.view_as(AgingBrainOptions)
+    datasets = p | "ReadTrainDataset" >> agingbrains.io.ReadNifti1(
+        options.train,
+        test_slice=options.test_slice)
+    paired = ( datasets
+      | beam.Map(
+        lambda data: (
+          int(data[0].split("/")[-1].split("_")[-1].split(".")[0])-1,
+          data[1].flatten()
+        )
+      )
+    )
+    pcoll_tuple = (
+      [ paired
+        | "Filter %d" % k >> beam.transforms.core.Filter(lambda x: x[0]==k) for k in [99,100] ]
+    )
+    for i in [0,1]:
+      ( pcoll_tuple[i]
+        | "Writing %d" % i >>beam.io.WriteToText(options.output)
+      )
+    p.run()
 
 if __name__ == "__main__":
-    read_and_emit_voxels()
+    compute_distance_matrix()
 
 def old_main():
     pipeline_options = beam.utils.options.PipelineOptions()
