@@ -3,6 +3,8 @@ import agingbrains
 import agingbrains.io
 import agingbrains.read_age
 import agingbrains.voxel_fit
+import numpy as np
+from apache_beam import pvalue
 
 class AgingBrainOptions(beam.utils.options.PipelineOptions):
 
@@ -66,6 +68,15 @@ def read_and_emit_voxels():
     )
     p.run()
 
+def distance_from(data,base_point):
+  yield (data[0],base_point[0]), np.linalg.norm(data[1] - base_point[1])
+
+def filter_points(data, keylist):
+  for k in keylist:
+    if data[0] == k:
+      yield pvalue.SideOutputValue('%d' % k, data)
+      break
+
 def compute_distance_matrix():
     """This should be run locally with :local_af"""
     pipeline_options = beam.utils.options.PipelineOptions()
@@ -82,14 +93,18 @@ def compute_distance_matrix():
         )
       )
     )
+    keys = range(278)
     pcoll_tuple = (
-      [ paired
-        | "Filter %d" % k >> beam.transforms.core.Filter(lambda x: x[0]==k) for k in [99,100] ]
+      paired
+      | "Split Data" >> beam.FlatMap(filter_points,keylist=keys).with_outputs()
     )
-    for i in [0,1]:
-      ( pcoll_tuple[i]
-        | "Writing %d" % i >>beam.io.WriteToText(options.output)
-      )
+
+    dist_mat = ( [ paired
+        | "Distance From %d" %k >>beam.FlatMap(distance_from,base_point=beam.pvalue.AsSingleton(pcoll_tuple['%d'%k]))
+        for k in keys ]
+      ) | beam.Flatten()
+
+    dist_mat | beam.io.WriteToText(options.output)
     p.run()
 
 if __name__ == "__main__":
