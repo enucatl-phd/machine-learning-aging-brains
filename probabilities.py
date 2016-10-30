@@ -63,6 +63,7 @@ if __name__ == "__main__":
         {"train": trained_voxels, "test": test_voxels}
         | "GroupTrainWithTest" >> beam.CoGroupByKey()
         | beam.core.FlatMap(agingbrains.voxel_fit.estimate_age)
+        | "RegroupTestDatasets" >> beam.GroupByKey()
         | beam.core.Map(agingbrains.io.save_probabilities)
         | beam.io.WriteToText(options.output, file_name_suffix=".tgz")
     )

@@ -56,6 +56,5 @@ def estimate_age((i, dictionary), scaling_factor=15):
     for file_id, value in dictionary["test"]:
         value = value / scaling_factor
         xy = np.vstack((ages, np.tile(value, ages.shape[0]))).T
-        z = np.exp(kde.score_samples(xy))
-        probs = z / np.sum(z)
-        yield file_id, i, probs
+        z = kde.score_samples(xy)
+        yield file_id, (i, logprobs)

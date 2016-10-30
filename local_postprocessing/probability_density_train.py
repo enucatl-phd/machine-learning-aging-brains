@@ -1,10 +1,15 @@
+from __future__ import division, print_function
 import os
 import click
 import numpy as np
 import tqdm
 import sklearn.neighbors as skn
+import sklearn.gaussian_process as skg
 import sklearn.base
+import sklearn.metrics
+import sklearn.model_selection
 import glob
+import scipy.stats
 
 
 class AgeRegressor(sklearn.base.BaseEstimator,
@@ -20,74 +25,89 @@ class AgeRegressor(sklearn.base.BaseEstimator,
         self.scaling_factor = scaling_factor
 
     def fit(self, X, y):
-        self.kdes_ = [0] * X.shape[1]
+        self.models_ = [0] * X.shape[1]
+        self.ages_ = y
         voxels = np.transpose(X)
+        ages_t = y.reshape(-1, 1)
+        self.ages_grid_ = np.arange(15, 100, 5).reshape(-1, 1)
+        kernel = (
+            44.7 ** 2
+            * skg.kernels.RBF(length_scale=30, length_scale_bounds=(10, 60))
+            + skg.kernels.WhiteKernel(noise_level=1e4,
+                                      noise_level_bounds=(1e3, 1e5))
+        )
+        ages_kde = skn.KernelDensity(kernel="gaussian", bandwidth=3)
+        ages_kde.fit(ages_t)
+        prior = np.exp(
+            ages_kde.score_samples(self.ages_grid_))
+        self.prior_ = prior / np.sum(prior)
+        self.models_ = []
         for i, voxel in tqdm.tqdm(enumerate(voxels)):
-            ar = np.vstack((y, voxel / self.scaling_factor)).T
-            kde = skn.KernelDensity(
-                kernel=self.kernel,
-                bandwidth=self.bandwidth)
-            kde.fit(ar)
-            self.kdes_[i] = kde
+            slope, intercept, _, _, _ = scipy.stats.linregress(y, voxel)
+            residuals = np.abs(voxel - slope * y - intercept)
+            gp = skg.GaussianProcessRegressor(
+                kernel=kernel,
+                n_restarts_optimizer=0)
+            gp.fit(ages_t, residuals)
+            item = slope * self.ages_grid_.flatten() + intercept, gp.predict(self.ages_grid_)
+            self.models_.append(item)
         return self
 
     def predict(self, X):
         try:
-            getattr(self, "kdes_")
+            getattr(self, "models_")
+            getattr(self, "ages_")
         except AttributeError:
             raise RuntimeError("You must train the regressor before predicting data!")
-        ages = np.arange(15, 95, 5)
-        zs = np.zeros(shape=(X.shape[0], X.shape[1], ages.shape[0]))
-        for i, (kde, voxels) in tqdm.tqdm(enumerate(
-                zip(self.kdes_, np.transpose(X)))):
-            xx, yy = np.meshgrid(ages, voxels / self.scaling_factor)
-            xy = np.dstack((xx, yy)).reshape(-1, 2)
-            z = kde.score_samples(xy).reshape(
-                X.shape[0], ages.shape[0])
-            zs[:, i, :] = z
-        modes = ages[np.argmax(zs, axis=2)]
-        return np.mean(modes, axis=1)
+        zs = np.zeros(shape=(X.shape[0], X.shape[1], self.ages_grid_.shape[0]))
+        for i, (model, voxels) in tqdm.tqdm(enumerate(
+                zip(self.models_, np.transpose(X)))):
+            for j, age in enumerate(self.ages_grid_):
+                mean, noise = model[0][j], model[1][j]
+                prob_voxel_given_age = scipy.stats.norm.pdf(
+                    (voxels - mean) / noise)
+                prob_age_given_voxel = prob_voxel_given_age
+                zs[:, i, j] = prob_age_given_voxel
+        zs /= np.sum(zs, axis=2, keepdims=True)
+        mean_ages = np.mean(
+            np.inner(zs, self.ages_grid_.flatten()),
+            axis=1)
+        return mean_ages.astype(int)
 
 
 @click.command()
 @click.argument("input_ages", nargs=1)
 @click.argument("train_folder", nargs=1)
-@click.argument("test_folder", nargs=1)
-def main(input_ages, train_folder, test_folder):
+def main(input_ages, train_folder):
     train_files = glob.glob(os.path.join(train_folder, "*"))
-    test_files = glob.glob(os.path.join(test_folder, "*"))
     train = [0] * len(train_files)
-    test = [0] * len(test_files)
     ages = np.array(
         [int(age)
          for age in open(input_ages).read().split()])
+    indices = np.random.randint(
+        0,
+        40000,
+        1000)
     for file_name in train_files:
         basename = os.path.splitext(os.path.basename(file_name))[0]
         i = int(basename.split("_")[1]) - 1
-        # train[i] = np.load(file_name)[0:1000]
-        train[i] = np.load(file_name)
-    for file_name in test_files:
-        basename = os.path.splitext(os.path.basename(file_name))[0]
-        i = int(basename.split("_")[1]) - 1
-        # test[i] = np.load(file_name)[0:1000]
-        test[i] = np.load(file_name)
+        train[i] = np.load(file_name)[indices]
+        # train[i] = np.load(file_name)
     train = np.array(train)
-    test = np.array(test)
-    print(train.shape)
-    print(test.shape)
-    scaling_factor = 15
-    kernel = "exponential"
-    bandwidth = 15
-    estimator = AgeRegressor()
-    estimator.fit(train, ages)
-    # predicted = estimator.predict(train[0:5, ...])
-    # print(np.vstack((ages[0:5], predicted)).T)
-    predicted = estimator.predict(test)
-    print(predicted)
-    # predicted = estimator.predict(test[0:20, ...])
-    # print(predicted)
-    # predicted = estimator.predict(test[0:40, ...])
-    # print(predicted)
+    kf = sklearn.model_selection.KFold(n_splits=3)
+    errors = []
+    for train_idx, test_idx in kf.split(train):
+        x_train = train[train_idx]
+        x_test = train[test_idx]
+        y_train = ages[train_idx]
+        y_test = ages[test_idx]
+        estimator = AgeRegressor()
+        estimator.fit(x_train, y_train)
+        predictions = estimator.predict(x_test)
+        mse = sklearn.metrics.mean_squared_error(y_test, predictions)
+        print(mse)
+        errors.append(mse)
+    print("MSE: ", sum(errors) / len(errors))
 
 
 if __name__ == "__main__":
