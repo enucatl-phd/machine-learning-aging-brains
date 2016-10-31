@@ -2,23 +2,6 @@ import apache_beam as beam
 from apache_beam import pvalue
 import numpy as np
 
-class BuildArrayFn(beam.CombineFn):
-    """Better to use the core beam.transforms.combiners.ToDict."""
-    def create_accumulator(self):
-        return {}
-
-    def add_input(self, data_dict, input):
-        data_dict[input[0]] = input[1]
-        return data_dict
-
-    def merge_accumulators(self, accumulators):
-        new_acc = []
-        for acc in accumulators:
-            new_acc += acc.items()
-        return dict(new_acc)
-
-    def extract_output(self, data_dict):
-        return data_dict
 
 def filter_points(data, keylist):
   for k in keylist:
