@@ -51,7 +51,7 @@ namespace :run do
     sh [
       "python test_stuff.py",
       "--project #{project}",
-      "--job_name #{project}-main-marco",
+      "--job_name #{project}-main-marco2",
       "--runner DataflowPipelineRunner",
       "--max_num_workers 300",
       "--autoscaling_algorithm THROUGHPUT_BASED",
@@ -61,7 +61,7 @@ namespace :run do
       "--zone #{zone}",
       "--setup_file ./setup.py",
       "--ages #{bucket}/targets.csv",
-      "--train \"#{bucket}/set_train/train_*.nii\"",
+      "--train \"#{bucket}/set_train/train_1[0-5][0-9].nii\"",
     ].join(" ")
   end
 
@@ -98,6 +98,7 @@ namespace :run do
   task :local_af do
     sh [
       "python test_stuff.py",
+      "--train \"data/set_train/train_1[0-5][0-9].nii\""
     ].join(" ")
   end
 
