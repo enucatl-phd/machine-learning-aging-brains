@@ -10,7 +10,7 @@ import numpy as np
 @click.command()
 @click.option(
     "--threshold",
-    default=0.6,
+    default=0.8,
 )
 @click.argument(
     "correlations",

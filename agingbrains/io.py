@@ -103,10 +103,3 @@ def groups2csv((name, dictionary)):
 
 def save_correlation((i, (corr, ar))):
     return "{0},{1}".format(i, corr)
-
-
-def save_probabilities((file_id, i, probs)):
-    line = StringIO.StringIO()
-    writer = csv.writer(line, lineterminator="")
-    writer.writerow([file_id, i] + ["{:.3g}".format(x) for x in probs])
-    return line.getvalue()

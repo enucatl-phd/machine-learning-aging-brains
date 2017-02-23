@@ -13,7 +13,7 @@ import sklearn.neighbors as skn
 
 def emit_voxels((file_name, dictionary)):
     data = dictionary["data"][0].flatten()
-    age = dictionary["age"][0]
+    age = dictionary["gender"][0]
     for i, voxel in enumerate(data):
         if voxel > 0:
             yield i, (age, voxel)
@@ -25,36 +25,12 @@ def correlation((i, ar)):
     return (i, (corr, ar))
 
 
-def filter_correlation((i, (corr, ar)), min_correlation=0.4):
-    return corr > min_correlation
-
-
-def estimate_kernel_density(
-        (i, ar),
-        kernel="exponential",
-        bandwidth=15,
-        scaling_factor=15):
-    ar = np.array(list(ar), dtype=float)
-    ar[:, 1] = ar[:, 1] / scaling_factor
-    kde = skn.KernelDensity(
-        kernel=kernel,
-        bandwidth=bandwidth)
-    kde.fit(ar)
-    return i, kde
-
-
-def emit_test_voxels((file_name, data)):
-    basename = os.path.splitext(os.path.basename(file_name))[0]
-    file_id = int(basename.split("_")[1])
-    for i, voxel in enumerate(data):
-        yield i, (file_id, voxel)
-
-
-def estimate_age((i, dictionary), scaling_factor=15):
-    ages = np.arange(15, 99)
-    kde = dictionary["train"][0]
-    for file_id, value in dictionary["test"]:
-        value = value / scaling_factor
-        xy = np.vstack((ages, np.tile(value, ages.shape[0]))).T
-        z = kde.score_samples(xy)
-        yield file_id, (i, logprobs)
+def fisher_score((i, ar)):
+    ar = np.array(list(ar), dtype=int)
+    genders, values = ar.T
+    fisher = (
+        (np.median(values[genders == 0])
+        - np.median(values[genders == 1])) ** 2 / 
+        (np.std(values[genders == 0]) + np.std(values[genders == 1]))
+    )
+    return (i, (fisher, ar))

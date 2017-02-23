@@ -8,6 +8,70 @@ bucket = "gs://mlp1-data-high-avail"
 output = "#{bucket}/output/output-#{id}"
 jobname = "#{project}-#{id}"
 
+namespace :fisher do
+
+  desc "calculate the fisher_score on the cloud the full dataset"
+  task :cloud_big do
+    sh [
+      "python fisher_score.py",
+      "--project #{project}",
+      "--job_name #{jobname}",
+      "--runner DataflowPipelineRunner",
+      "--max_num_workers 8",
+      "--autoscaling_algorithm THROUGHPUT_BASED",
+      "--staging_location #{bucket}/staging",
+      "--temp_location #{bucket}/temp",
+      "--output #{output}",
+      "--zone europe-west1-c",
+      "--disk_size_gb 100",
+      "--worker_machine_type n1-highcpu-2",
+      "--setup_file ./setup.py",
+      "--genders #{bucket}/mlp3-targets.csv",
+      "--input \"#{bucket}/set_train/train_*.nii\"",
+    ].join(" ")
+  end
+
+  desc "calculate the fisher_score on the cloud with all test files, but only a slice of the data"
+  task :cloud_small do
+    sh [
+      "python fisher_score.py",
+      "--project #{project}",
+      "--job_name #{jobname}",
+      "--runner BlockingDataflowPipelineRunner",
+      "--max_num_workers 8",
+      "--autoscaling_algorithm THROUGHPUT_BASED",
+      "--staging_location #{bucket}/staging",
+      "--temp_location #{bucket}/temp",
+      "--output #{output}",
+      "--zone europe-west1-c",
+      "--disk_size_gb 100",
+      "--worker_machine_type n1-highcpu-2",
+      "--setup_file ./setup.py",
+      "--test_slice",
+      "--genders #{bucket}/mlp3-targets.csv",
+      "--input \"#{bucket}/set_train/train_*.nii\"",
+    ].join(" ")
+  end
+
+  desc "calculate the fisher_score locally with two files only"
+  task :local_small do
+    sh [
+      "python fisher_score.py",
+      "--test_slice"
+    ].join(" ")
+  end
+
+  desc "calculate the fisher_score locally with all files"
+  task :local_big do
+    sh [
+      "python fisher_score.py",
+      "--test_slice",
+      "--train \"data/set_train/train_*.nii\"",
+    ].join(" ")
+  end
+
+end
+
 namespace :correlation do
 
   output = "#{bucket}/correlation_output/output-#{id}"
